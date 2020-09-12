@@ -11,7 +11,9 @@ exports.addVideo = (req, res) => {
 
   const newVideo = {
     videoUrl,
+    title:'Gameroom Sample Video Title',
     userHandle: req.user.handle,
+    avatar: req.user.imageUrl,
     createdAt: new Date().toISOString(),
     thumbnail: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${noVid}?alt=media`,
   }
@@ -39,7 +41,9 @@ exports.getAllVideos = (req, res) => {
           videoUrl: doc.data().videoUrl,
           userHandle: doc.data().userHandle,
           createdAt: doc.data().createdAt,
-          description: doc.data().description,
+          avatar: doc.data().avatar,
+          thumbnail: doc.data().thumbnail,
+          title: doc.data().title,
         })
       })
       return res.json(videos)
