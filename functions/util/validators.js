@@ -42,6 +42,7 @@ exports.validateVideoDetails = data => {
   let errors = {}
 
   if (isEmpty(data.description)) errors.description = 'Must not be empty'
+  if (isEmpty(data.title)) errors.title = 'Must not be empty'
 
   return {
     errors,

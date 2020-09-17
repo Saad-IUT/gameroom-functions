@@ -100,6 +100,28 @@ exports.login = (req, res) => {
     })
 }
 
+// Get all users
+exports.getAllUsers = (req, res) => {
+  db.collection('users')
+    .get()
+    .then(data => {
+      let users = []
+      data.forEach(doc => {
+        users.push({
+          userId: doc.id,
+          imageUrl: doc.data().imageUrl,
+          handle: doc.data().handle,
+          bio: doc.data().bio,
+        })
+      })
+      return res.json(users)
+    })
+    .catch(err => {
+      console.error(err)
+      res.status(500).json({ error: err.code })
+    })
+}
+
 // Upload a profile image for user
 exports.uploadImage = (req, res) => {
   const BusBoy = require('busboy')
@@ -238,7 +260,10 @@ exports.getUserDetails = (req, res) => {
         userData.videos.push({
           videoUrl: doc.data().videoUrl,
           createdAt: doc.data().createdAt,
+          thumbnail: doc.data().thumbnail,
+          title: doc.data().title,
           userHandle: doc.data().userHandle,
+          description: doc.data().description,
           videoId: doc.id,
         })
       })

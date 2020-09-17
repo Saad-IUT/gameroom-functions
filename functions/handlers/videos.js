@@ -11,7 +11,9 @@ exports.addVideo = (req, res) => {
 
   const newVideo = {
     videoUrl,
-    title:'Gameroom Sample Video Title',
+    title: 'Gameroom Sample Video Title',
+    description:
+      'This is a sample short description for GAMEROOM video, please update the description as per your requirement',
     userHandle: req.user.handle,
     avatar: req.user.imageUrl,
     createdAt: new Date().toISOString(),
@@ -52,6 +54,59 @@ exports.getAllVideos = (req, res) => {
       console.error(err)
       res.status(500).json({ error: err.code })
     })
+}
+
+exports.uploadThumbnail = (req, res) => {
+  const BusBoy = require('busboy')
+  const path = require('path')
+  const os = require('os')
+  const fs = require('fs')
+
+  const busboy = new BusBoy({ headers: req.headers })
+
+  let imageToBeUploaded = {}
+  let imageFileName
+
+  busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
+      return res.status(400).json({ error: 'Wrong file type submitted' })
+    }
+    // my.image.png => ['my', 'image', 'png']
+    const imageExtension = filename.split('.')[filename.split('.').length - 1]
+    // 32756238461724837.png
+    imageFileName = `${Math.round(
+      Math.random() * Date.now()
+    ).toString()}.${imageExtension}`
+    const filepath = path.join(os.tmpdir(), imageFileName)
+    imageToBeUploaded = { filepath, mimetype }
+    file.pipe(fs.createWriteStream(filepath))
+  })
+  busboy.on('finish', () => {
+    admin
+      .storage()
+      .bucket()
+      .upload(imageToBeUploaded.filepath, {
+        resumable: false,
+        metadata: {
+          metadata: {
+            contentType: imageToBeUploaded.mimetype,
+          },
+        },
+      })
+      .then(() => {
+        // Append token to url
+        const thumbnail = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media`
+        return db.doc(`/videos/${req.params.videoId}`).update({ thumbnail })
+      })
+      .then(() => {
+        return res.json({ message: 'Thumbnail uploaded successfully' })
+      })
+      .catch(err => {
+        console.error(err)
+        return res.status(500).json({ error: 'something went wrong' })
+      })
+  })
+  busboy.end(req.rawBody)
 }
 
 // Fetch one video
@@ -98,9 +153,10 @@ exports.deleteVideo = (req, res) => {
 }
 
 // Add video details
-exports.addVideoDetails = (req, res) => {
+exports.editVideoDetails = (req, res) => {
   const details = {
     description: req.body.description,
+    title: req.body.title,
   }
   const { valid, errors } = validateVideoDetails(details)
 
@@ -109,7 +165,7 @@ exports.addVideoDetails = (req, res) => {
   db.doc(`/videos/${req.params.videoId}`)
     .update(details)
     .then(() => {
-      return res.json({ message: 'Details added successfully' })
+      return res.json({ message: 'Details updated successfully' })
     })
     .catch(err => {
       console.error(err)

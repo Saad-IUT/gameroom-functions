@@ -12,13 +12,15 @@ const {
   addUserDetails,
   getAuthenticatedUser,
   getUserDetails,
+  getAllUsers,
 } = require('./handlers/users')
 const {
   addVideo,
   getAllVideos,
   getVideo,
   deleteVideo,
-  addVideoDetails,
+  editVideoDetails,
+  uploadThumbnail,
 } = require('./handlers/videos')
 
 // Video routes
@@ -26,9 +28,11 @@ app.get('/videos', getAllVideos)
 app.post('/video', FBAuth, addVideo)
 app.get('/video/:videoId', getVideo)
 app.delete('/video/:videoId', FBAuth, deleteVideo)
-app.post('/video/details/:videoId', FBAuth, addVideoDetails)
+app.post('/video/details/:videoId', FBAuth, editVideoDetails)
+app.post('/thumbnail/:videoId', FBAuth, uploadThumbnail)
 
 // Users routes
+app.get('/users', getAllUsers)
 app.post('/signup', signup)
 app.post('/login', login)
 app.post('/user/image', FBAuth, uploadImage)
