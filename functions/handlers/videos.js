@@ -110,16 +110,33 @@ exports.uploadThumbnail = (req, res) => {
 }
 
 // Fetch one video
-exports.getVideo = (req, res) => {
+exports.getVideoDetails = (req, res) => {
   let videoData = {}
   db.doc(`/videos/${req.params.videoId}`)
     .get()
     .then(doc => {
-      if (!doc.exists) {
+      if (doc.exists) {
+        videoData = doc.data()
+        return db
+          .collection('users')
+          .where('handle', '==', doc.data().userHandle)
+          .limit(1)
+          .get()
+      } else {
         return res.status(404).json({ error: 'Video not found' })
       }
-      videoData = doc.data()
-      videoData.videoId = doc.id
+    })
+    .then(data => {
+      videoData.user = {
+        email: data.docs[0].data().email,
+        userId: data.docs[0].id,
+        imageUrl: data.docs[0].data().imageUrl,
+        createdAt: data.docs[0].data().createdAt,
+        website: data.docs[0].data().website,
+        handle: data.docs[0].data().handle,
+        location: data.docs[0].data().location,
+        bio: data.docs[0].data().bio,
+      }
       return res.json(videoData)
     })
     .catch(err => {

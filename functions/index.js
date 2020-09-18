@@ -17,7 +17,7 @@ const {
 const {
   addVideo,
   getAllVideos,
-  getVideo,
+  getVideoDetails,
   deleteVideo,
   editVideoDetails,
   uploadThumbnail,
@@ -26,7 +26,7 @@ const {
 // Video routes
 app.get('/videos', getAllVideos)
 app.post('/video', FBAuth, addVideo)
-app.get('/video/:videoId', getVideo)
+app.get('/video/:videoId', getVideoDetails)
 app.delete('/video/:videoId', FBAuth, deleteVideo)
 app.post('/video/details/:videoId', FBAuth, editVideoDetails)
 app.post('/thumbnail/:videoId', FBAuth, uploadThumbnail)
