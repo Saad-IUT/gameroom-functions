@@ -6,6 +6,17 @@ const cors = require('cors')
 app.use(cors())
 
 const {
+  addVideo,
+  getAllVideos,
+  getVideoDetails,
+  deleteVideo,
+  editVideoDetails,
+  uploadThumbnail,
+  likeVideo,
+  unlikeVideo,
+} = require('./handlers/videos')
+
+const {
   login,
   signup,
   uploadImage,
@@ -14,20 +25,14 @@ const {
   getUserDetails,
   getAllUsers,
 } = require('./handlers/users')
-const {
-  addVideo,
-  getAllVideos,
-  getVideoDetails,
-  deleteVideo,
-  editVideoDetails,
-  uploadThumbnail,
-} = require('./handlers/videos')
 
 // Video routes
 app.get('/videos', getAllVideos)
 app.post('/video', FBAuth, addVideo)
 app.get('/video/:videoId', getVideoDetails)
 app.delete('/video/:videoId', FBAuth, deleteVideo)
+app.get('/video/:videoId/like', FBAuth, likeVideo)
+app.get('/video/:videoId/unlike', FBAuth, unlikeVideo)
 app.post('/video/details/:videoId', FBAuth, editVideoDetails)
 app.post('/thumbnail/:videoId', FBAuth, uploadThumbnail)
 

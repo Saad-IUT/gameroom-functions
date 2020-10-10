@@ -17,6 +17,8 @@ exports.addVideo = (req, res) => {
     userHandle: req.user.handle,
     avatar: req.user.imageUrl,
     createdAt: new Date().toISOString(),
+    likeCount: 0,
+    commentCount: 0,
     thumbnail: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${noVid}?alt=media`,
   }
   db.doc(`/videos/${req.body.videoFileName}`)
@@ -145,7 +147,7 @@ exports.getVideoDetails = (req, res) => {
     })
 }
 
-// Delete a scream
+// Delete a video
 exports.deleteVideo = (req, res) => {
   const document = db.doc(`/videos/${req.params.videoId}`)
   document
@@ -187,5 +189,98 @@ exports.editVideoDetails = (req, res) => {
     .catch(err => {
       console.error(err)
       return res.status(500).json({ error: err.code })
+    })
+}
+
+// Like a video
+exports.likeVideo = (req, res) => {
+  const likeDocument = db
+    .collection('likes')
+    .where('userHandle', '==', req.user.handle)
+    .where('videoId', '==', req.params.videoId)
+    .limit(1)
+
+  const videoDocument = db.doc(`/videos/${req.params.videoId}`)
+
+  let videoData
+
+  videoDocument
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        videoData = doc.data()
+        videoData.videoId = doc.id
+        return likeDocument.get()
+      } else {
+        return res.status(404).json({ error: 'Video not found' })
+      }
+    })
+    .then(data => {
+      if (data.empty) {
+        return db
+          .collection('likes')
+          .add({
+            videoId: req.params.videoId,
+            userHandle: req.user.handle,
+          })
+          .then(() => {
+            videoData.likeCount++
+            return videoDocument.update({ likeCount: videoData.likeCount })
+          })
+          .then(() => {
+            return res.json(videoData)
+          })
+      } else {
+        return res.status(400).json({ error: 'Video already liked' })
+      }
+    })
+    .catch(err => {
+      console.error(err)
+      res.status(500).json({ error: err.code })
+    })
+}
+
+// Unlike a video
+exports.unlikeVideo = (req, res) => {
+  const likeDocument = db
+    .collection('likes')
+    .where('userHandle', '==', req.user.handle)
+    .where('videoId', '==', req.params.videoId)
+    .limit(1)
+
+  const videoDocument = db.doc(`/videos/${req.params.videoId}`)
+
+  let videoData
+
+  videoDocument
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        videoData = doc.data()
+        videoData.videoId = doc.id
+        return likeDocument.get()
+      } else {
+        return res.status(404).json({ error: 'Video not found' })
+      }
+    })
+    .then(data => {
+      if (data.empty) {
+        return res.status(400).json({ error: 'Video not liked' })
+      } else {
+        return db
+          .doc(`/likes/${data.docs[0].id}`)
+          .delete()
+          .then(() => {
+            videoData.likeCount--
+            return videoDocument.update({ likeCount: videoData.likeCount })
+          })
+          .then(() => {
+            res.json(videoData)
+          })
+      }
+    })
+    .catch(err => {
+      console.error(err)
+      res.status(500).json({ error: err.code })
     })
 }
