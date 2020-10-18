@@ -48,6 +48,8 @@ exports.getAllVideos = (req, res) => {
           avatar: doc.data().avatar,
           thumbnail: doc.data().thumbnail,
           title: doc.data().title,
+          commentCount: doc.data().commentCount,
+          likeCount: doc.data().likeCount,
         })
       })
       return res.json(videos)
@@ -58,6 +60,7 @@ exports.getAllVideos = (req, res) => {
     })
 }
 
+// Add thumbnail
 exports.uploadThumbnail = (req, res) => {
   const BusBoy = require('busboy')
   const path = require('path')
@@ -189,6 +192,39 @@ exports.editVideoDetails = (req, res) => {
     .catch(err => {
       console.error(err)
       return res.status(500).json({ error: err.code })
+    })
+}
+
+// Comment on video
+exports.commentOnVideo = (req, res) => {
+  if (req.body.body.trim() === '')
+    return res.status(400).json({ comment: 'Must not be empty' })
+
+  const newComment = {
+    body: req.body.body,
+    createdAt: new Date().toISOString(),
+    videoId: req.params.videoId,
+    userHandle: req.user.handle,
+    userImage: req.user.imageUrl,
+  }
+
+  db.doc(`/videos/${req.params.videoId}`)
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+        return res.status(404).json({ error: 'Video not found' })
+      }
+      return doc.ref.update({ commentCount: doc.data().commentCount + 1 })
+    })
+    .then(() => {
+      return db.collection('comments').add(newComment)
+    })
+    .then(() => {
+      res.json(newComment)
+    })
+    .catch(err => {
+      console.error(err)
+      res.status(500).json({ error: 'Something went wrong' })
     })
 }
 
